@@ -9,7 +9,7 @@ function App() {
 
   useEffect(() => {
     axios
-      .get('http://localhost:8080/api/all') // Replace with live API when needed
+      .get('https://barca-backend.onrender.com/api/all') // Replace with live API when needed
       .then((res) => setData(res.data))
       .catch((err) => console.error(err));
   }, []);
