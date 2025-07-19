@@ -1,87 +1,42 @@
 import React, { useState } from "react";
+import CsvUploadModal from "../modals/CsvUploadModal"; // assume you created this
+import XlsxUploadModal from "../modals/XlsxUploadModal"; // optional if using XLSX
+// import AddLeadModal from "../modals/AddLeadModal"; // for single manual entry
 
-const initialForm = {
-  name: "",
-  phone: "",
-  email: "",
-  status: "New",
-};
-
-export default function CreateNewLead({ onCreate }) {
-  const [form, setForm] = useState(initialForm);
-  const [submitting, setSubmitting] = useState(false);
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setSubmitting(true);
-
-    // Simulate API call or call onCreate prop
-    setTimeout(() => {
-      if (onCreate) onCreate(form);
-      setForm(initialForm);
-      setSubmitting(false);
-    }, 500);
-  };
+export default function CreateNewLead() {
+  const [showCsvModal, setShowCsvModal] = useState(false);
+  const [showXlsxModal, setShowXlsxModal] = useState(false);
+  const [showSingleLeadModal, setShowSingleLeadModal] = useState(false);
 
   return (
-    <div className="bg-white shadow rounded-2xl p-4 w-full max-w-md">
-      <h3 className="text-lg font-semibold text-blue-800 mb-4">Create New Lead</h3>
+    <div className="bg-white shadow rounded-2xl p-6 w-full max-w-md space-y-4">
+      <h3 className="text-lg font-semibold text-blue-800 mb-2">Lead Management</h3>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <input
-          type="text"
-          name="name"
-          placeholder="Full Name"
-          value={form.name}
-          onChange={handleChange}
-          className="w-full border rounded px-3 py-2"
-          required
-        />
+      <button
+        onClick={() => setShowSingleLeadModal(true)}
+        className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
+      >
+        ➕ Create Single Lead
+      </button>
 
-        <input
-          type="tel"
-          name="phone"
-          placeholder="Phone Number"
-          value={form.phone}
-          onChange={handleChange}
-          className="w-full border rounded px-3 py-2"
-          required
-        />
+      <button
+        onClick={() => setShowCsvModal(true)}
+        className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700"
+      >
+        📄 Import from CSV
+      </button>
 
-        <input
-          type="email"
-          name="email"
-          placeholder="Email Address"
-          value={form.email}
-          onChange={handleChange}
-          className="w-full border rounded px-3 py-2"
-        />
+      <button
+        onClick={() => setShowXlsxModal(true)}
+        className="w-full bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700"
+      >
+        📊 Import from Excel (.xlsx)
+      </button>
 
-        <select
-          name="status"
-          value={form.status}
-          onChange={handleChange}
-          className="w-full border rounded px-3 py-2"
-        >
-          <option value="New">New</option>
-          <option value="In Progress">In Progress</option>
-          <option value="Paid">Paid</option>
-          <option value="Not Interested">Not Interested</option>
-        </select>
-
-        <button
-          type="submit"
-          disabled={submitting}
-          className="bg-blue-600 text-white w-full py-2 rounded hover:bg-blue-700"
-        >
-          {submitting ? "Creating..." : "Create Lead"}
-        </button>
-      </form>
+      {/* Modals */}
+      {/* {showSingleLeadModal && <AddLeadModal onClose={() => setShowSingleLeadModal(false)} />} */}
+      {showCsvModal && <CsvUploadModal onClose={() => setShowCsvModal(false)} />}
+      {showXlsxModal && <XlsxUploadModal onClose={() => setShowXlsxModal(false)} />}
     </div>
   );
 }

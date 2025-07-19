@@ -12,7 +12,8 @@ import { Link } from "react-router-dom";
 
 const navItems = [
   { name: "Dashboard", icon: <Home size={20} />, to: "/" },
-  { name: "Callers", icon: <Users size={20} />, to: "/callers" },
+  { name: "Callers", icon: <Users size={20} />, to: "/manage-callers" },
+  { name: "Admins", icon: <Users size={20} />, to: "/manage-admins" },
   { name: "Leads", icon: <Phone size={20} />, to: "/leads" },
   { name: "Payment Link", icon: <IndianRupee size={20} />, to: "/create-payment-link" },
   { name: "New Lead", icon: <UserPlus size={20} />, to: "/new-lead" },

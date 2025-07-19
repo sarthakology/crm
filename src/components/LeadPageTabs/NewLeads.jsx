@@ -1,113 +1,139 @@
-import React, { useState } from "react";
-import AssignCallerModal from "../../modals/AssignCallerModal";
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 import LeadDetailModal from "../../modals/LeadDetailModal";
 
-const sampleLeads = [
-  { id: 1, name: "Riya Sharma", phone: "9876543210", status: "New" },
-  { id: 2, name: "Arjun Mehta", phone: "9123456780", status: "New" },
-  { id: 3, name: "Sneha Patel", phone: "9988776655", status: "New" },
-  { id: 4, name: "Karan Das", phone: "9001122334", status: "New" },
-];
-
 export default function NewLeads() {
-  const [selectMode, setSelectMode] = useState(false);
-  const [selectedLeads, setSelectedLeads] = useState([]);
-  const [showAssignModal, setShowAssignModal] = useState(false);
-  const [leadDetail, setLeadDetail] = useState(null); // for lead detail modal
+  const [leads, setLeads] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [sortField, setSortField] = useState("createdAt");
+  const [sortOrder, setSortOrder] = useState("desc");
+  const [selectedLead, setSelectedLead] = useState(null); // 👈 State for modal
 
-  const handleLeadClick = (lead) => {
-    if (selectMode) {
-      handleCheckboxChange(lead.id);
+  useEffect(() => {
+    axios
+      .get("http://localhost:8080/get/leads/fresh", {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      })
+      .then((res) => {
+        setLeads(res.data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error("Failed to fetch leads", err);
+        setLoading(false);
+      });
+  }, []);
+
+  const handleSort = (field) => {
+    if (field === sortField) {
+      setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
     } else {
-      setLeadDetail(lead);
+      setSortField(field);
+      setSortOrder("asc");
     }
   };
 
-  const handleCheckboxChange = (id) => {
-    setSelectedLeads((prev) =>
-      prev.includes(id) ? prev.filter((leadId) => leadId !== id) : [...prev, id]
-    );
-  };
+  const sortedLeads = [...leads].sort((a, b) => {
+    let valA = a[sortField];
+    let valB = b[sortField];
 
-  const handleAssignClick = () => {
-    setShowAssignModal(true);
-  };
+    if (sortField === "playerFirstName" || sortField === "camp" || sortField === "assignedTo") {
+      valA = (valA || "").toLowerCase();
+      valB = (valB || "").toLowerCase();
+      return sortOrder === "asc" ? valA.localeCompare(valB) : valB.localeCompare(valA);
+    }
+
+    if (sortField === "duplicate") {
+      return sortOrder === "asc"
+        ? Number(a.duplicate) - Number(b.duplicate)
+        : Number(b.duplicate) - Number(a.duplicate);
+    }
+
+    if (sortField === "createdAt") {
+      return sortOrder === "asc"
+        ? new Date(valA) - new Date(valB)
+        : new Date(valB) - new Date(valA);
+    }
+
+    return 0;
+  });
+
+  const renderSortIcon = (field) =>
+    sortField === field ? (sortOrder === "asc" ? "↑" : "↓") : "";
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-4">
-  <h3 className="text-lg font-semibold text-blue-800">New Leads</h3>
+    <div className="p-4 overflow-x-auto">
+      <h2 className="text-xl font-semibold text-blue-800 mb-4">Fresh Leads</h2>
 
-  <div className="flex items-center gap-x-2">
-    {selectMode && selectedLeads.length > 0 && (
-      <button
-        onClick={handleAssignClick}
-        className="bg-green-600 text-white px-4 py-1 rounded hover:bg-green-700"
-      >
-        Assign Caller
-      </button>
-    )}
-    <button
-      onClick={() => {
-        setSelectMode((prev) => !prev);
-        setSelectedLeads([]);
-      }}
-      className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700"
-    >
-      {selectMode ? "Cancel" : "Select"}
-    </button>
-  </div>
-</div>
-
-
-      <div className="space-y-3">
-        {sampleLeads.map((lead) => (
-          <div
-            key={lead.id}
-            className="flex items-center justify-between p-3 bg-gray-50 rounded shadow-sm hover:bg-blue-50 cursor-pointer"
-            onClick={() => handleLeadClick(lead)}
-          >
-            <div className="flex items-center space-x-3">
-              {selectMode && (
-                <input
-                  type="checkbox"
-                  checked={selectedLeads.includes(lead.id)}
-                  onChange={(e) => {
-                    e.stopPropagation(); // Prevent lead click
-                    handleCheckboxChange(lead.id);
-                  }}
-                />
-              )}
-              <div>
-                <div className="font-medium text-blue-700">{lead.name}</div>
-                <div className="text-sm text-gray-500">{lead.phone}</div>
-              </div>
-            </div>
-            <span className="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded">
-              {lead.status}
-            </span>
-          </div>
-        ))}
-      </div>
-
-      {showAssignModal && (
-        <AssignCallerModal
-          selectedLeadIds={selectedLeads}
-          onClose={() => setShowAssignModal(false)}
-          onAssign={(caller) => {
-            console.log("Assigned", selectedLeads, "to", caller);
-            setShowAssignModal(false);
-            setSelectedLeads([]);
-            setSelectMode(false);
-          }}
-        />
+      {loading ? (
+        <div className="text-gray-600">Loading leads...</div>
+      ) : (
+        <table className="min-w-full text-sm text-left border border-gray-200 bg-white rounded shadow">
+          <thead className="bg-blue-50 text-blue-800 font-semibold">
+            <tr>
+              <th className="px-4 py-2 cursor-pointer" onClick={() => handleSort("playerFirstName")}>
+                Name {renderSortIcon("playerFirstName")}
+              </th>
+              <th className="px-4 py-2">Phone</th>
+              <th className="px-4 py-2">Email</th>
+              <th className="px-4 py-2 cursor-pointer" onClick={() => handleSort("camp")}>
+                Camp {renderSortIcon("camp")}
+              </th>
+              <th className="px-4 py-2 cursor-pointer" onClick={() => handleSort("duplicate")}>
+                Duplicate {renderSortIcon("duplicate")}
+              </th>
+              <th className="px-4 py-2 cursor-pointer" onClick={() => handleSort("createdAt")}>
+                Created At {renderSortIcon("createdAt")}
+              </th>
+              <th className="px-4 py-2 cursor-pointer" onClick={() => handleSort("assignedTo")}>
+                Assigned To {renderSortIcon("assignedTo")}
+              </th>
+              <th className="px-4 py-2">View</th>
+            </tr>
+          </thead>
+          <tbody>
+            {sortedLeads.map((lead) => {
+              const name = `${lead.playerFirstName || ""} ${lead.playerLastName || ""}`.trim();
+              return (
+                <tr key={lead._id} className="border-t hover:bg-blue-50">
+                  <td className="px-4 py-2">{name || "—"}</td>
+                  <td className="px-4 py-2">{lead.phone || "—"}</td>
+                  <td className="px-4 py-2">{lead.email || "—"}</td>
+                  <td className="px-4 py-2">{lead.camp || "—"}</td>
+                  <td className="px-4 py-2">
+                    <span
+                      className={`inline-block w-3 h-3 rounded-full mr-2 ${
+                        lead.duplicate ? "bg-red-500" : "bg-green-500"
+                      }`}
+                    ></span>
+                    {lead.duplicate ? "Yes" : "No"}
+                  </td>
+                  <td className="px-4 py-2">
+                    {new Date(lead.createdAt).toLocaleDateString()}
+                  </td>
+                  <td className="px-4 py-2">
+                    {lead.assignedTo || <span className="text-gray-400 italic">Unassigned</span>}
+                  </td>
+                  <td className="px-4 py-2">
+                    <button
+                      onClick={() => setSelectedLead(lead)}
+                      className="text-blue-600 hover:underline"
+                    >
+                      View
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       )}
 
-      {leadDetail && (
-        <LeadDetailModal
-          lead={leadDetail}
-          onClose={() => setLeadDetail(null)}
-        />
+      {selectedLead && (<>
+        <LeadDetailModal lead={selectedLead} onClose={() => setSelectedLead(null)} />
+          </>
       )}
     </div>
   );

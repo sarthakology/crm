@@ -1,48 +1,50 @@
-import React, { useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
+import axios from "axios";
 import CallerDetailsModal from "../modals/CallerDetailsModal";
-import AddCallerModal from "../modals/AddCallerModal";
+import API_URLS from "../API_URLS";
+import GlobalContext from "../context/GlobalContext";
 
 export default function ManageCaller() {
-  const [callers, setCallers] = useState([
-    {
-      id: 1,
-      name: "Ravi Kumar",
-      phone: "9876543210",
-      email: "ravi@example.com",
-      totalCalls: 34,
-      conversionRate: "28%",
-      lastCall: "2025-07-08",
-      region: "Delhi",
-    },
-    {
-      id: 2,
-      name: "Ayesha Khan",
-      phone: "9123456780",
-      email: "ayesha@example.com",
-      totalCalls: 45,
-      conversionRate: "35%",
-      lastCall: "2025-07-09",
-      region: "Mumbai",
-    },
-  ]);
-
+  const [callers, setCallers] = useState([]);
   const [selectedCaller, setSelectedCaller] = useState(null);
-  const [showAddModal, setShowAddModal] = useState(false);
 
-  const handleAddCaller = (newCaller) => {
-    setCallers((prev) => [
-      ...prev,
-      { ...newCaller, id: Date.now(), totalCalls: 0, conversionRate: "0%", lastCall: "-", region: "Unknown" },
-    ]);
-    setShowAddModal(false);
+  const { setShowAddCallerModel } = useContext(GlobalContext);
+
+  console.log(selectedCaller);
+  const fetchCallers = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.get(API_URLS.CALLER_LIST, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = response.data.map((caller) => ({
+        id: caller._id,
+        name: caller.fullName || "Unnamed",
+        email: caller.email,
+        phone: caller.phone || "N/A",
+        isOnline: caller.isOnline,
+        lastSeen: caller.lastSeen,
+      }));
+
+      setCallers(data);
+    } catch (error) {
+      console.error("Failed to load callers:", error);
+    }
   };
+
+  useEffect(() => {
+    fetchCallers();
+  }, []);
 
   return (
     <div className="bg-white shadow rounded-2xl p-4">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold text-blue-800">Manage Callers</h2>
         <button
-          onClick={() => setShowAddModal(true)}
+          onClick={() => setShowAddCallerModel(true)}
           className="bg-blue-600 text-white px-4 py-1 rounded hover:bg-blue-700"
         >
           + Add Caller
@@ -56,8 +58,22 @@ export default function ManageCaller() {
             className="py-3 cursor-pointer hover:bg-blue-50 px-2 rounded"
             onClick={() => setSelectedCaller(caller)}
           >
-            <div className="font-medium text-blue-700">{caller.name}</div>
-            <div className="text-sm text-gray-500">{caller.phone}</div>
+            <div className="flex items-center gap-2">
+              <span
+                className={`inline-block w-3 h-3 rounded-full ${
+                  caller.isOnline ? "bg-green-500" : "bg-gray-400"
+                }`}
+              ></span>
+              <div className="font-medium text-blue-700">{caller.name}</div>
+            </div>
+            <div className="text-sm text-gray-500">{caller.email}</div>
+            <div className="text-xs text-gray-400">
+              {caller.isOnline
+                ? "Online now"
+                : caller.lastSeen
+                ? `Last seen: ${new Date(caller.lastSeen).toLocaleString()}`
+                : "Offline"}
+            </div>
           </div>
         ))}
       </div>
@@ -66,13 +82,6 @@ export default function ManageCaller() {
         <CallerDetailsModal
           caller={selectedCaller}
           onClose={() => setSelectedCaller(null)}
-        />
-      )}
-
-      {showAddModal && (
-        <AddCallerModal
-          onClose={() => setShowAddModal(false)}
-          onSubmit={handleAddCaller}
         />
       )}
     </div>

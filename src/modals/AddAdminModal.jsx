@@ -3,11 +3,11 @@ import axios from "axios";
 import API_URLS from "../API_URLS";
 import GlobalContext from "../context/GlobalContext";
 
-export default function AddCallerModal({  }) {
+export default function AddAdminModal() {
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
-    const { loader, setLoader, setShowAddCallerModel } = useContext(GlobalContext);
 
+  const { setLoader, setShowAddAdminModel } = useContext(GlobalContext);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -19,7 +19,7 @@ export default function AddCallerModal({  }) {
     try {
       const token = localStorage.getItem("token");
       await axios.post(
-        API_URLS.CREATE_CALLER,
+        API_URLS.CREATE_ADMIN,
         { email },
         {
           headers: {
@@ -27,10 +27,9 @@ export default function AddCallerModal({  }) {
           },
         }
       );
-
-      setShowAddCallerModel(false)
+      setShowAddAdminModel(false);
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to add caller");
+      setError(err.response?.data?.message || "Failed to add admin");
     } finally {
       setLoader(false);
     }
@@ -40,45 +39,47 @@ export default function AddCallerModal({  }) {
     <div className="fixed inset-0 z-50 bg-black bg-opacity-40 flex items-center justify-center">
       <div className="bg-white rounded-xl shadow-lg w-full max-w-md p-6">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold text-blue-800">Add New Caller</h3>
-          <button onClick={() => setShowAddCallerModel(false)} className="text-gray-500 hover:text-red-500 text-xl">×</button>
+          <h3 className="text-lg font-semibold text-blue-800">Add New Admin</h3>
+          <button
+            onClick={() => setShowAddAdminModel(false)}
+            className="text-gray-500 hover:text-red-500 text-xl"
+          >
+            ×
+          </button>
         </div>
 
         {error && <div className="text-red-500 text-sm mb-4">{error}</div>}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm text-gray-700 mb-1">Caller Email</label>
+            <label className="block text-sm text-gray-700 mb-1">Admin Email</label>
             <input
               type="email"
-              name="email"
               className="w-full border rounded px-3 py-2 text-sm"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
             />
           </div>
-
           <div className="text-right">
             <button
               type="submit"
               className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-              disabled={loader}
             >
-              {loader ? "Adding..." : "Add Caller"}
+              Add Admin
             </button>
           </div>
         </form>
 
-        {/* 👇 Registration instructions for admin */}
+        {/* Instructions */}
         <div className="mt-6 p-3 bg-blue-50 border border-blue-200 rounded-md text-sm text-blue-900">
-          <p className="font-semibold mb-1">After adding a caller:</p>
+          <p className="font-semibold mb-1">After adding an admin:</p>
           <ol className="list-decimal pl-5 space-y-1">
-            <li>Tell the caller to visit the <strong>Register</strong> page.</li>
-            <li>Ask them to enter the same email you've just added.</li>
-            <li>They will receive an OTP on their email (valid for 5 mins).</li>
-            <li>After verifying the OTP, they can set a password.</li>
-            <li>Once registered, they can log in and access their dashboard.</li>
+            <li>Ask them to visit the <strong>Register</strong> page.</li>
+            <li>They’ll enter the email you registered here.</li>
+            <li>They’ll receive an OTP to verify their identity.</li>
+            <li>Once OTP is verified, they’ll set a password.</li>
+            <li>After that, they can login and manage the CRM.</li>
           </ol>
         </div>
       </div>

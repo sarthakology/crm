@@ -1,20 +1,37 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import API_URLS from "../API_URLS";
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState("admin@example.com");
-  const [password, setPassword] = useState("password");
+  const [email, setEmail] = useState("sarthak@barcaacademy.in");
+  const [password, setPassword] = useState("sarthaksarthak");
 
-  const handleLogin = (e) => {
-    e.preventDefault();
-    // Dummy auth
-    if (email === "admin@example.com" && password === "password") {
-      navigate("/");
-    } else {
-      alert("Invalid credentials");
+const handleLogin = async (e) => {
+  e.preventDefault();
+  try {
+    const response = await axios.post(API_URLS.LOGIN, {
+      email,
+      password,
+    });
+
+    const { token, user } = response.data;
+
+    // Save token and user info in localStorage (or context)
+    localStorage.setItem("token", token);
+    localStorage.setItem("user", JSON.stringify(user));
+
+    // Navigate based on role
+    if (user.role === "admin") {
+      navigate("/admin");
+    } else if (user.role === "caller") {
+      navigate("/caller");
     }
-  };
+  } catch (err) {
+    alert(err.response?.data?.message || "Login failed");
+  }
+};
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center px-4">
